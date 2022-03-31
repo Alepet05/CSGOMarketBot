@@ -1,6 +1,7 @@
 import login
 import api_key_generator
 import query
+import json
 
         
 def get_market_items_db(current_db_file_name: str):
@@ -48,6 +49,28 @@ def update_market_items():
     market_items_db = get_market_items_db(current_db_file_name) # сама база данных вещей
     write_market_items_to_file(market_items_db) # сохранение
     # write_market_items_to_file(get_market_items_db(get_current_db_file_name()))
+
+def get_stickers():
+    """Возвращает все возможные стикеры с их идентификаторами на торговой площадке.
+    """
+    api_key = api_key_generator.get_api_key() # получаем api-ключ
+    url = f'https://market.csgo.com/api/GetStickers/?key={api_key}&lang=ru' # подставляем его в url-адрес
+    stickers = query.get_content(url, flag='json') # получаем стикеры в json формате
+
+    write_stickers_to_file(stickers) # сохраняем стикеры
+
+    # считываем стикеры из файла
+    with open('stikers.json', 'r', encoding='utf-8') as file:
+        stickers = json.load(file)
+
+    return stickers['stickers'] # возвращаем непосредственно словарь со стикерами
+
+def write_stickers_to_file(stickers):
+    """Сохраняет все стикеры в json-файл
+    """
+
+    with open('stikers.json', 'w', encoding='utf-8') as file:
+        json.dump(stickers, file, indent=4, ensure_ascii=False)
 
 def main():
     if not login.login_to_steam():

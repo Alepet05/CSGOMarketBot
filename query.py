@@ -25,7 +25,7 @@ def get_content(url: str, **kwargs):
             }
             response = requests.post(url, data=payload, headers=headers) # post-запрос для генерации токена
             return response.content
-        # если передали флаг json, то ожидаем получить информацию о текущем имени файла базы данных
+        # если передали флаг json, то ожидаем получить ответ сервера в json формате
         elif kwargs['flag'] == 'json':
             response = requests.get(url) # get запрос на сервер
             return response.json()
