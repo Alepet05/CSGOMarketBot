@@ -1,5 +1,5 @@
 from bs4 import BeautifulSoup
-from main import get_content
+import query
 
 def get_api_key():
     create_api_key()
@@ -22,7 +22,7 @@ def create_api_key():
     url = 'https://market.csgo.com/docs'
     action, csrf_token = get_payload() # получаем данные, необходимые для отправки post-запроса на сервер
 
-    html = get_content(url, flag='key', action=action, csrf_token=csrf_token) # отправляем post-запрос для создания api-ключа на странице  
+    html = query.get_content(url, flag='key', action=action, csrf_token=csrf_token) # отправляем post-запрос для создания api-ключа на странице  
     soup = BeautifulSoup(html, 'lxml') # объект супа
     
     api_key = soup.find('div', class_='cat-descr').find('p', class_='col0').get_text(strip=True) # ищем сам ключ
@@ -35,7 +35,7 @@ def get_payload():
         action, csrf_token (tuple): кортеж, хранящий action и csrf-токен
     """
     url = 'https://market.csgo.com/docs'
-    html = get_content(url, flag='html') # get-запрос
+    html = query.get_content(url, flag='html') # get-запрос
     soup = BeautifulSoup(html, 'lxml') # объект супа
 
     # из спрятанных input'ов достаем action и csrf-токен 
