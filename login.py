@@ -95,7 +95,6 @@ def get_cookies():
         cookies = json.load(f)
 
     # приводим куки в нужный формат для их дальнейшей передачи в заголовках: _ym_uid=1642943714246294679; _ym_d=1642943714; и тд
-    formatted_cookies = [f"{cookie['name']}={cookie['value']}" for cookie in cookies]
-    cookies = '; '.join(formatted_cookies)
-
+    cookies = '; '.join([f"{cookie['name']}={cookie['value']}" for cookie in cookies])
+    
     return cookies
