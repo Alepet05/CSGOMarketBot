@@ -1,3 +1,5 @@
+import csv
+from turtle import update
 import login
 import api_key_generator
 import query
@@ -93,15 +95,48 @@ def get_user_stickers_ids(user_stickers_names: list):
     user_stickers_ids = [sticker['id'] for sticker in filter(lambda sticker: sticker['name'] in user_stickers_names, stickers)]
     return user_stickers_ids
 
+def get_market_items():
+    """Получает из csv-файла все предметы на продаже в фиксированный момент времени
+
+    Returns:
+        market_items (list): список словарей с информацией о предмете
+    """
+
+    market_items = [] # заранее объявляем список предметов
+    
+    # считываем данные из csv файла
+    with open('market_items.csv', encoding='utf-8') as file:
+        reader = csv.reader(file) # создаем объект reader
+        # пробегаемся по каждому предмету в таблице
+        for row in reader:
+            item_data = {} # словарь с инфой о премете
+
+            item_data['c_classid'] = row[0].split(';')[0] # полезная инфа
+            item_data['c_instanceid'] = row[0].split(';')[1] # полезная инфа
+            item_data['price'] = row[0].split(';')[2] # цена предмета
+            item_data['amount'] = row[0].split(';')[3] # кол-во доступных предметов
+            item_data['quality'] = row[0].split(';')[6] # качество предмета
+            item_data['stickers_id'] = row[0].split(';')[9] # ID стикеров для поиска названий стикеров на предмете по их ID 
+            item_data['name'] = row[0].split(';')[10] # название предмета
+            item_data['url'] = f"https://market.csgo.com/item/{item_data['c_classid']}-{item_data['c_instanceid']}" # на всякий ссылка на предмет
+            
+            market_items.append(item_data)
+
+    return market_items
 
 def main():
     if not login.login_to_steam():
         return False
+        
+    update_market_items()
     update_stickers()
 
     user_stickers_names = ['Наклейка: Vox Eminor | Катовице 2014', 'iBUYPOWER | Катовице 2014', 'Team Liquid | Колумбус 2016', 'Flipsid3 Tactics (голографическая) | Атланта 2017']
     user_stickers_ids = get_user_stickers_ids(user_stickers_names)
     print(user_stickers_ids)
-    
+
+    market_items = get_market_items()
+    print(market_items[5000]) # просто для примера
+
 if __name__ == '__main__':
     main()
