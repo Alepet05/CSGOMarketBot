@@ -27,7 +27,7 @@ def get_content(url: str, **kwargs):
             return response.content
         # если передали флаг json, то ожидаем получить ответ сервера в json формате
         elif kwargs['flag'] == 'json':
-            response = requests.get(url) # get запрос на сервер
+            response = requests.get(url)
             return response.json()
         # если передали флаг html, то ожижаем получить html страницу, соответственно отправляем заголовки
         elif kwargs['flag'] == 'html':

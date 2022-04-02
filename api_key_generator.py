@@ -1,15 +1,27 @@
 from bs4 import BeautifulSoup
 import query
 
-def get_api_key():
-    create_api_key()
 
+def get_api_key():
+    """Возвращает сгенерированный api-ключ аккаунта
+
+    Returns:
+        api_key (str): api-ключ
+    """
+    create_api_key() # т.к. нужно получить api-ключ только один раз, можно прямо тут его и создать
+
+    # т.к. заранее создали ключ, то он точно лежит в файле, так что считываем его
     with open('api_key.txt', 'r', encoding='utf-8') as f:
         api_key = f.read()
 
     return api_key
 
 def save_api_key(api_key: str):
+    """Сохраняет api-ключ в файл
+
+    Args:
+        api_key (str): api-ключ
+    """
     with open('api_key.txt', 'w', encoding='utf-8') as f:
         f.write(api_key)
 
@@ -17,7 +29,7 @@ def create_api_key():
     """Создает личный api-ключ для автоматической торговли, который будет привязан к вашему аккаунту
 
     Returns:
-        api_key (str): личный ключ
+        api_key (str): личный api-ключ
     """
     url = 'https://market.csgo.com/docs'
     action, csrf_token = get_payload() # получаем данные, необходимые для отправки post-запроса на сервер

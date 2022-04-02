@@ -3,7 +3,9 @@ import api_key_generator
 import query
 import json
 
-        
+
+API_KEY = api_key_generator.get_api_key() # получаем api-ключ и работаем с ним но конца сеанса, иначе каждый вызов будет генерироваться новый api-ключ
+
 def get_market_items_db(current_db_file_name: str):
     """Возвращает базу данных всех вещей на продаже в фиксированный момент времени
 
@@ -33,7 +35,6 @@ def write_market_items_to_file(market_items_db: str):
     Args:
         market_items_db (str): CSV-файл с данными в формате строки
     """
-
     with open('market_items_db.csv', 'w', encoding='utf-8') as file:
         file.write(market_items_db)
 
@@ -50,31 +51,34 @@ def update_market_items():
     write_market_items_to_file(market_items_db) # сохранение
     # write_market_items_to_file(get_market_items_db(get_current_db_file_name()))
 
-def get_stickers():
-    """Возвращает все возможные стикеры с их идентификаторами на торговой площадке.
+def update_stickers():
+    """Обновляет файл со стикерами, полученных с сервера.
     """
-    api_key = api_key_generator.get_api_key() # получаем api-ключ
-    url = f'https://market.csgo.com/api/GetStickers/?key={api_key}&lang=ru' # подставляем его в url-адрес
+    url = f'https://market.csgo.com/api/GetStickers/?key={API_KEY}&lang=ru' # чтобы получить словарь стикеров, маркету необходим api-ключ
     stickers = query.get_content(url, flag='json') # получаем стикеры в json формате
-
     write_stickers_to_file(stickers) # сохраняем стикеры
 
-    # считываем стикеры из файла
-    with open('stikers.json', 'r', encoding='utf-8') as file:
-        stickers = json.load(file)
+def get_stickers():
+    """Возвращает все возможные стикеры с их идентификаторами на торговой площадке.
 
-    return stickers['stickers'] # возвращаем непосредственно словарь со стикерами
+    Returns:
+        list: список словарей со стикерами
+    """
+    # считываем стикеры из файла
+    with open('stickers.json', 'r', encoding='utf-8') as file:
+        stickers = json.load(file)
+    return stickers['stickers'] # возвращаем непосредственно список словарей со стикерами
 
 def write_stickers_to_file(stickers):
     """Сохраняет все стикеры в json-файл
     """
-
-    with open('stikers.json', 'w', encoding='utf-8') as file:
+    with open('stickers.json', 'w', encoding='utf-8') as file:
         json.dump(stickers, file, indent=4, ensure_ascii=False)
 
 def main():
     if not login.login_to_steam():
         return False
-    print(api_key_generator.get_api_key())
+    update_stickers()
+    
 if __name__ == '__main__':
     main()
