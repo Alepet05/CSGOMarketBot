@@ -75,10 +75,33 @@ def write_stickers_to_file(stickers):
     with open('stickers.json', 'w', encoding='utf-8') as file:
         json.dump(stickers, file, indent=4, ensure_ascii=False)
 
+def get_user_stickers_ids(user_stickers_names: list):
+    """Ищет пользовательские стикеры по их названию в базе всех стикеров.
+    Возвращает список ID всех найденных пользовательских стикеров в базе всех стикеров
+
+    Зачем? Дело в том, что у предметов на торговой площадке указываются не названия стикеров, а ID стикеров
+    Args:
+        user_stickers_name (list): список указанных пользователем названий стикеров
+
+    Returns:
+        user_stickers_ids (list): список ID всех указанных пользователем стикеров, которые удалось найти базе данных всех стикеров
+    """
+    stickers = get_stickers() # получаем стикеры из базы данных
+    # проходимся по каждому стикеру в базе данных
+    # и проверяем, есть ли название этого стикера в списке названий пользовательских стикеров;
+    # если да, то записываем его ID в список ID всех указанных пользователем стикеров
+    user_stickers_ids = [sticker['id'] for sticker in filter(lambda sticker: sticker['name'] in user_stickers_names, stickers)]
+    return user_stickers_ids
+
+
 def main():
     if not login.login_to_steam():
         return False
     update_stickers()
+
+    user_stickers_names = ['Наклейка: Vox Eminor | Катовице 2014', 'iBUYPOWER | Катовице 2014', 'Team Liquid | Колумбус 2016', 'Flipsid3 Tactics (голографическая) | Атланта 2017']
+    user_stickers_ids = get_user_stickers_ids(user_stickers_names)
+    print(user_stickers_ids)
     
 if __name__ == '__main__':
     main()
