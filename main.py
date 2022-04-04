@@ -1,5 +1,4 @@
 import csv
-from turtle import update
 import login
 import api_key_generator
 import query
@@ -37,7 +36,7 @@ def write_market_items_to_file(market_items_db: str):
     Args:
         market_items_db (str): CSV-файл с данными в формате строки
     """
-    with open('market_items_db.csv', 'w', encoding='utf-8') as file:
+    with open('market_items.csv', 'w', encoding='utf-8') as file:
         file.write(market_items_db)
 
 def update_market_items():
@@ -95,6 +94,66 @@ def get_user_stickers_ids(user_stickers_names: list):
     user_stickers_ids = [sticker['id'] for sticker in filter(lambda sticker: sticker['name'] in user_stickers_names, stickers)]
     return user_stickers_ids
 
+# по каким-то причинам сервер https://float.csgo.com/ лежит, возвращает ошибки типа 500
+# def get_float_hash(classid: str, instanceid: str):
+#     """Получает хэш предмета для запроса Float Value (потертость) со специального сервера
+
+#     Args:
+#         classid (str): ClassID предмета в Steam
+#         instanceid (str): InstanceID предмета в Steam
+
+#     Returns:
+#         float_hash (str): хэш для получения float предмета
+#     """
+#     url = f'https://market.csgo.com/api/GetFloatHash/{classid}_{instanceid}/?key={API_KEY}'
+#     float_hash = query.get_content(url, flag='json')['hash']
+#     return float_hash
+
+# def get_float(classid: str, instanceid: str):
+#     """Получает значения Float предмета: Float Value (потертость), Seed, Index
+
+#     Args:
+#         classid (str): ClassID предмета в Steam
+#         instanceid (str): InstanceID предмета в Steam
+
+#     Returns:
+#         float (dict): информация float: непосредственно значение float, seed и index
+#     """
+#     url = 'https://float.csgo.com/'
+#     float_hash = get_float_hash(classid, instanceid)
+#     content = query.get_content(url, flag='json', req=float_hash)
+#     if content['status']:
+#         float = {
+#             'float': content['paintwear'], 
+#             'seed': content['paintseed'],
+#             'index': content['paintindex']
+#         }
+#     else:
+#         float = {}
+#     return float
+
+def get_float(classid: str, instanceid: str):
+    """Получает значения Float предмета: Float Value (потертость), Seed, Index
+
+    Args:
+        classid (str): ClassID предмета в Steam
+        instanceid (str): InstanceID предмета в Steam
+
+    Returns:
+        float (dict): информация float: непосредственно значение float, seed и index
+    """
+    url = f'https://market.csgo.com/float/{classid}/{instanceid}'
+    content = query.get_content(url, flag='json')
+    if content['status']:
+        float = {
+            'float': content['paintwear'], 
+            'seed': content['paintseed'],
+            'index': content['paintindex']
+        }
+    else:
+        float = {}
+    return float
+
 def get_market_items():
     """Получает из csv-файла все предметы на продаже в фиксированный момент времени
 
@@ -107,17 +166,22 @@ def get_market_items():
     # считываем данные из csv файла
     with open('market_items.csv', encoding='utf-8') as file:
         reader = csv.reader(file) # создаем объект reader
+        headers = next(reader) # первая строка csv таблицы вида c_classid;c_instanceid;c_price;c_offers;c_popularity...
         # пробегаемся по каждому предмету в таблице
         for row in reader:
             item_data = {} # словарь с инфой о премете
 
-            item_data['c_classid'] = row[0].split(';')[0] # полезная инфа
-            item_data['c_instanceid'] = row[0].split(';')[1] # полезная инфа
+            item_data['c_classid'] = row[0].split(';')[0] # ClassID предмета в Steam
+            item_data['c_instanceid'] = row[0].split(';')[1] # InstanceID предмета в Steam
             item_data['price'] = row[0].split(';')[2] # цена предмета
             item_data['amount'] = row[0].split(';')[3] # кол-во доступных предметов
             item_data['quality'] = row[0].split(';')[6] # качество предмета
             item_data['stickers_id'] = row[0].split(';')[9] # ID стикеров для поиска названий стикеров на предмете по их ID 
             item_data['name'] = row[0].split(';')[10] # название предмета
+            try:
+                item_data['hash_name'] = row[0].split(';')[12] # hash название предмета, некоторые методы api его требуют
+            except IndexError: # не все предметы имеют hash name
+                item_data['hash_name'] = ''
             item_data['url'] = f"https://market.csgo.com/item/{item_data['c_classid']}-{item_data['c_instanceid']}" # на всякий ссылка на предмет
             
             market_items.append(item_data)

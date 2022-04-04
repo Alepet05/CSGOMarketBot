@@ -27,7 +27,12 @@ def get_content(url: str, **kwargs):
             return response.content
         # если передали флаг json, то ожидаем получить ответ сервера в json формате
         elif kwargs['flag'] == 'json':
-            response = requests.get(url)
+            # если передали параметр req, то ожидаем получить float
+            if 'req' in kwargs:
+                data = {'req': kwargs['req']} # передаем хэш предмета для запроса float
+                response = requests.post(url, data=data) # api требует отправить post-запрос с хэшем
+            else:
+                response = requests.get(url)
             return response.json()
         # если передали флаг html, то ожижаем получить html страницу, соответственно отправляем заголовки
         elif kwargs['flag'] == 'html':
