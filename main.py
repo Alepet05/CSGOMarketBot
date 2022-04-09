@@ -1,4 +1,5 @@
 import csv
+import time
 import login
 import api_key_generator
 import query
@@ -94,7 +95,7 @@ def get_user_stickers_ids(user_stickers_names: list):
     return user_stickers_ids
 
 # по каким-то причинам сервер https://float.csgo.com/ лежит, возвращает ошибки типа 500
-# def get_float_hash(classid: str, instanceid: str):
+# def get_item_float_hash(classid: str, instanceid: str):
 #     """Получает хэш предмета для запроса Float Value (потертость) со специального сервера
 
 #     Args:
@@ -109,7 +110,7 @@ def get_user_stickers_ids(user_stickers_names: list):
 #     float_hash = query.get_content(url, flag='json')['hash']
 #     return float_hash
 
-# def get_float(classid: str, instanceid: str):
+# def get_item_float(classid: str, instanceid: str):
 #     """Получает значения Float предмета: Float Value (потертость), Seed, Index
 
 #     Args:
@@ -117,22 +118,22 @@ def get_user_stickers_ids(user_stickers_names: list):
 #         instanceid (str): InstanceID предмета в Steam
 
 #     Returns:
-#         float (dict): информация float: непосредственно значение float, seed и index
+#         item_float (dict): информация float: непосредственно значение float, seed и index
 #     """
 #     url = 'https://float.csgo.com/'
-#     float_hash = get_float_hash(classid, instanceid)
+#     float_hash = get_item_float_hash(classid, instanceid)
 #     content = query.get_content(url, flag='json', req=float_hash)
 #     if content['status']:
-#         float = {
+#         item_float = {
 #             'float': content['paintwear'], 
 #             'seed': content['paintseed'],
 #             'index': content['paintindex']
 #         }
 #     else:
-#         float = {}
-#     return float
+#         item_float = {}
+#     return item_float
 
-def get_float(classid: str, instanceid: str):
+def get_item_float(classid: str, instanceid: str):
     """Получает значения Float предмета: Float Value (потертость), Seed, Index
 
     Args:
@@ -140,19 +141,19 @@ def get_float(classid: str, instanceid: str):
         instanceid (str): InstanceID предмета в Steam
 
     Returns:
-        float (dict): информация float: непосредственно значение float, seed и index
+        item_float (dict): информация float: непосредственно значение float, seed и index
     """
     url = f'https://market.csgo.com/float/{classid}/{instanceid}'
     content = query.get_content(url, flag='json')
     if content['status']:
-        float = {
-            'float': content['paintwear'], 
+        item_float = {
+            'float_value': content['paintwear'], 
             'seed': content['paintseed'],
             'index': content['paintindex']
         }
     else:
-        float = {}
-    return float
+        item_float = {}
+    return item_float
 
 def get_market_items():
     """Получает из csv-файла все предметы на продаже в фиксированный момент времени
@@ -176,7 +177,7 @@ def get_market_items():
             item_data['price'] = row[0].split(';')[2] # цена предмета
             item_data['amount'] = row[0].split(';')[3] # кол-во доступных предметов
             item_data['quality'] = row[0].split(';')[6] # качество предмета
-            item_data['stickers_id'] = row[0].split(';')[9] # ID стикеров для поиска названий стикеров на предмете по их ID 
+            item_data['sticker_ids'] = row[0].split(';')[9] # ID стикеров для поиска названий стикеров на предмете по их ID 
             item_data['name'] = row[0].split(';')[10] # название предмета
             try:
                 item_data['hash_name'] = row[0].split(';')[12] # hash название предмета, некоторые методы api его требуют
@@ -188,11 +189,117 @@ def get_market_items():
 
     return market_items
 
+def get_formatted_price(price: str):
+    """Вывод цены в удобочитаемом формате
+
+    Args:
+        price (str): цена
+
+    Returns:
+        str: цена в нужном формате
+    """
+
+    price_list = list(price) # разбиваем строку на отдельные символы
+    price_list.insert(-2, '.') # разделяем копейки от рублей 12999 -> 129.99
+    return ''.join(price_list) # склеиваем строку обратно
+
+def get_market_item_sticker_names(sticker_ids: list):
+    """Ищет стикеры конкретного предмета по их ID в базе всех стикеров.
+    Возвращает названия всех найденных на предмете стикеров.
+
+    Args:
+        sticker_ids (list): список ID стикеров на предмете
+
+    Returns:
+        srt: названия всех найденных на предмете стикеров, разделенных ', ' 
+    """
+    sticker_ids_list = sticker_ids.split('|') # разбиваем строку на отдельные ID например, (9272819286|9144421154|5227247238|)
+    stickers = get_stickers() # получаем стикеры
+    # проходимся по каждому стикеру в базе данных
+    # и проверяем, есть ли ID этого стикера в списке ID стикера предмета;
+    # если да, то записываем его название в список названий всех найденных на предмете стикеров
+    sticker_names = [sticker['name'] for sticker in filter(lambda sticker: sticker['id'] in sticker_ids_list, stickers)]
+    return ', '.join(sticker_names)
+
+def print_item_info(item: dict):
+    """Выводит информацию переданного предмета
+
+    Args:
+        item (dict): предмет маркета
+    """
+    print('#'*60)
+    print('Новый предмет!')
+    print(f"Предмет: {item['name']}")
+    print(f"Цена: {get_formatted_price(item['price'])} RUB")
+    print(f"Стикеры: {get_market_item_sticker_names(item['sticker_ids'])}")
+    # получение флот занимает много времени, т.к. нужна пауза между запросами во избежание бана
+    # item_float = get_item_float(item['c_classid'], item['c_instanceid'])
+    # if item_float:
+    #     print(f"Float: {item_float['float_value']}\nSeed: {item_float['seed']}\nIndex: {item_float['index']}")
+    print(f"Ссылка: {item['url']}")
+    print('#'*60)
+    print('\n')
+
+def search_market_items_by_stickers(market_items: list, user_stickers_ids: list, searched_items: list):
+    """Ищет по стикерам предметы в базе данных всех вещей на продаже
+
+    Args:
+        market_items (list): список словарей с информацией о предмете
+        user_stickers_ids (list): список ID пользовательских стикеров
+        searched_items (list): найденные предметы
+
+    Returns:
+        searched_items (list): найденные предметы
+    """
+    for item in market_items: # проходимся по каждому предмету на площадке
+        #if any(map(lambda user_sticker_id: user_sticker_id in item['sticker_ids'].split('|') and item not in searched_items, user_stickers_ids))
+        for user_sticker_id in user_stickers_ids: # проходимся по каждому ID пользовательских стикеров
+            # если очередной ID стикера пользователя в списке ID стикеров предмета и не в списке найденных предметов,
+            # то добавляем предмет в список найденных и выводим его инфу
+            if user_sticker_id in item['sticker_ids'].split('|') and item not in searched_items:
+                searched_items.append(item)
+                print_item_info(item)
+    # оставляем в списке найденных предметов только те предметы, которые есть в списке всех предметов маркета
+    # таким образом, длина списка найденных предметов никогда не будет превышать длину списка всех предметов маркета
+    searched_items = list(filter(lambda item: item in market_items, searched_items))
+    return searched_items
+
+def write_searched_items_to_file(searched_items: list):
+    """Записывает найденные предметы в json файл
+
+    Args:
+        searched_items (list): найденные предметы маркета
+    """
+    with open('searched_items.json', 'w', encoding='utf-8') as file:
+        json.dump(searched_items, file, indent=4, ensure_ascii=False)
+
+def get_user_stickers_from_file():
+    """Получает стикеры пользователя из файла
+
+    Returns:
+        user_stickers (list): список стикеров пользователя
+    """
+    with open('user_stickers.txt', encoding='utf-8') as f:
+        user_stickers = f.read().split('\n')
+    return user_stickers
+
 def main():
     if not login.login_to_steam():
         return False
-        
-    api_key_generator.create_api_key()
+
+    api_key_generator.create_api_key() # генерируем api-ключ
+    update_stickers() # обновляем стикеры
+
+    user_stickers_names = get_user_stickers_from_file() # достаем пользовательские стикеры
+    user_stickers_ids = get_user_stickers_ids(user_stickers_names) # получаем ID пользовательских стикеров
+    searched_items = [] # инициализируем список найденных вещей
+    # предпологается, что бот постоянно уведомляет о новых предметах
+    while True:
+        update_market_items() # обновляем бд предметов на продаже
+        market_items = get_market_items() # получаем предметы маркета 
+        searched_items = search_market_items_by_stickers(market_items, user_stickers_ids, searched_items) # поиск нужных предметов
+        write_searched_items_to_file(searched_items) # на всякий перезаписываем каждый раз список найденных предметов, таким образом в файле всегда относительно актуальные предметы
+        time.sleep(60) # пауза между обновлением бд предметов
 
 if __name__ == '__main__':
     main()
