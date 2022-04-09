@@ -5,8 +5,6 @@ import query
 import json
 
 
-API_KEY = api_key_generator.get_api_key() # получаем api-ключ и работаем с ним но конца сеанса, иначе каждый вызов будет генерироваться новый api-ключ
-
 def get_market_items_db(current_db_file_name: str):
     """Возвращает базу данных всех вещей на продаже в фиксированный момент времени
 
@@ -55,7 +53,8 @@ def update_market_items():
 def update_stickers():
     """Обновляет файл со стикерами, полученных с сервера.
     """
-    url = f'https://market.csgo.com/api/GetStickers/?key={API_KEY}&lang=ru' # чтобы получить словарь стикеров, маркету необходим api-ключ
+    api_key = api_key_generator.get_api_key()
+    url = f'https://market.csgo.com/api/GetStickers/?key={api_key}&lang=ru' # чтобы получить словарь стикеров, маркету необходим api-ключ
     stickers = query.get_content(url, flag='json') # получаем стикеры в json формате
     write_stickers_to_file(stickers) # сохраняем стикеры
 
@@ -105,7 +104,8 @@ def get_user_stickers_ids(user_stickers_names: list):
 #     Returns:
 #         float_hash (str): хэш для получения float предмета
 #     """
-#     url = f'https://market.csgo.com/api/GetFloatHash/{classid}_{instanceid}/?key={API_KEY}'
+#     api_key = api_key_generator.get_api_key()  
+#     url = f'https://market.csgo.com/api/GetFloatHash/{classid}_{instanceid}/?key={api_key}'
 #     float_hash = query.get_content(url, flag='json')['hash']
 #     return float_hash
 
@@ -192,15 +192,7 @@ def main():
     if not login.login_to_steam():
         return False
         
-    update_market_items()
-    update_stickers()
-
-    user_stickers_names = ['Наклейка: Vox Eminor | Катовице 2014', 'iBUYPOWER | Катовице 2014', 'Team Liquid | Колумбус 2016', 'Flipsid3 Tactics (голографическая) | Атланта 2017']
-    user_stickers_ids = get_user_stickers_ids(user_stickers_names)
-    print(user_stickers_ids)
-
-    market_items = get_market_items()
-    print(market_items[5000]) # просто для примера
+    api_key_generator.create_api_key()
 
 if __name__ == '__main__':
     main()
