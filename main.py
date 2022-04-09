@@ -1,4 +1,5 @@
 import csv
+import os
 import time
 import login
 import api_key_generator
@@ -284,10 +285,13 @@ def get_user_stickers_from_file():
     return user_stickers
 
 def main():
+    # если аутентификация не прошла, то завершаем работу
     if not login.login_to_steam():
         return False
 
-    api_key_generator.create_api_key() # генерируем api-ключ
+    # если пользователь не указал api-ключ, то генерируем его самостоятельно
+    if not os.path.getsize('api_key.txt'):
+        api_key_generator.create_api_key() # генерируем api-ключ
     update_stickers() # обновляем стикеры
 
     user_stickers_names = get_user_stickers_from_file() # достаем пользовательские стикеры

@@ -24,10 +24,7 @@ def save_api_key(api_key: str):
         f.write(api_key)
 
 def create_api_key():
-    """Создает личный api-ключ, который будет привязан к вашему аккаунту
-
-    Returns:
-        api_key (str): личный api-ключ
+    """Создает и сохраняет личный api-ключ, который будет привязан к вашему аккаунту
     """
     url = 'https://market.csgo.com/docs'
     action, csrf_token = get_payload() # получаем данные, необходимые для отправки post-запроса на сервер
