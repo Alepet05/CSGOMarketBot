@@ -1,5 +1,5 @@
 # CSGOMarketBot
-Бот для поиска предметов по стикерам 
+Бот для поиска предметов с торговой площадки CSGO Market по заданным стикерам
 # Установка
 * Склонируйте репозиторий командой git clone https://github.com/u5er-name/CSGOMarketBot.git
 * Выполните команду "pip install -r requirements.txt"
