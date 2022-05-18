@@ -1,7 +1,7 @@
 # CSGOMarketBot
 Бот для поиска предметов с торговой площадки CSGO Market по заданным стикерам
 # Установка
-* Склонируйте репозиторий командой git clone https://github.com/u5er-name/CSGOMarketBot.git
+* Склонируйте репозиторий командой git clone https://github.com/Alepet1337/CSGOMarketBot.git
 * Выполните команду "pip install -r requirements.txt"
 # Настройка
 * В файле config.py впишите свои имя пользователя и пароль Steam-аккаунта, а также код двухфакторной аутентификации Steam Guard. Учтите, что код двухфакторной аутентификации действует ограниченное кол-во времени.
